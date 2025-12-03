@@ -1,0 +1,5 @@
+{
+  "name": "Grandmaster Recall",
+  "description": "Test your chess knowledge by naming random chess openings from their board positions.",
+  "requestFramePermissions": []
+}
