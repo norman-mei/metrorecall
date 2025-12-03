@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Moon, Sun, Volume2, VolumeX, Zap, BarChart3, Settings as SettingsIcon, Github } from 'lucide-react';
+import { X, Moon, Sun, Zap, BarChart3, Settings as SettingsIcon, Github } from 'lucide-react';
 import { GameSettings, PlayerStats, TransitRegion, GameRecord } from '../types';
 
 interface SettingsModalProps {
@@ -186,24 +186,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Gameplay</h3>
-
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
-                      {settings.soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">Sound Effects</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Toggle UI sounds; logos are visual-only.</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => updateSettings('soundEnabled', !settings.soundEnabled)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.soundEnabled ? 'bg-purple-600' : 'bg-gray-300'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.soundEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                </div>
 
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center gap-3">

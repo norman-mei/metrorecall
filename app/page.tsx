@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Heart, History, Lightbulb, RefreshCw, Settings, Trash2, Trophy, XCircle } from 'lucide-react';
+import { TRANSIT_SYSTEMS } from '@/data/data';
 
 import SettingsModal from '@/components/SettingsModal';
 import PasswordModal from '@/components/PasswordModal';
@@ -25,7 +26,6 @@ type SessionEntry = {
 };
 
 const DEFAULT_SETTINGS: GameSettings = {
-  soundEnabled: true,
   animationEnabled: true,
   difficulty: 'Any',
 };
@@ -80,12 +80,13 @@ export default function Page() {
     readLocalStorage('transit-history', []),
   );
 
-  const [gameState, setGameState] = useState<GameState>({
+const [gameState, setGameState] = useState<GameState>({
     status: 'idle',
     currentSystem: null,
     score: 0,
     lives: INITIAL_LIVES,
     history: [],
+    seen: [],
     message: null,
     hintsRemaining: MAX_HINTS,
   });
@@ -147,6 +148,7 @@ export default function Page() {
       score: 0,
       lives: INITIAL_LIVES,
       history: [],
+      seen: firstSystem ? [firstSystem.name] : [],
       message: null,
       hintsRemaining: MAX_HINTS,
     });
@@ -230,12 +232,40 @@ export default function Page() {
       ]);
       setRoundStats({ livesLost: 0, hintsUsed: 0 });
       setGameState((prev) => {
+        const pool =
+          settings.difficulty === 'Any'
+            ? TRANSIT_SYSTEMS
+            : TRANSIT_SYSTEMS.filter((i) => i.region === settings.difficulty);
         const newHistory = [...prev.history, prev.currentSystem!.name];
-        const nextSystem = getRandomSystem(newHistory, settings.difficulty);
+        const newSeen = Array.from(new Set([...prev.seen, prev.currentSystem!.name]));
+
+        if (newSeen.length >= pool.length) {
+          finalizeGame({
+            ...prev,
+            score: prev.score + 1,
+            history: newHistory,
+            seen: newSeen,
+            message: 'You reached the end! Congrats!',
+            status: 'completed',
+            currentSystem: null,
+          });
+          return {
+            ...prev,
+            status: 'completed',
+            score: prev.score + 1,
+            history: newHistory,
+            seen: newSeen,
+            currentSystem: null,
+            message: 'You reached the end! Congrats!',
+          };
+        }
+
+        const nextSystem = getRandomSystem(newSeen, settings.difficulty);
         return {
           ...prev,
           score: prev.score + 1,
           history: newHistory,
+          seen: newSeen,
           currentSystem: nextSystem,
           message: 'Correct!',
         };
@@ -274,7 +304,7 @@ export default function Page() {
               },
             ]);
           }
-          handleGameOver({ ...prev, lives: 0, status: 'gameover' });
+          finalizeGame({ ...prev, lives: 0, status: 'gameover' });
           setIsProcessingGuess(false);
           return { ...prev, status: 'gameover', lives: 0 };
         }
@@ -285,7 +315,7 @@ export default function Page() {
     }, 600);
   };
 
-  const handleGameOver = (finalState: GameState) => {
+  const finalizeGame = (finalState: GameState) => {
     const record: GameRecord = {
       id: Date.now().toString(),
       timestamp: Date.now(),
@@ -321,8 +351,28 @@ export default function Page() {
     clearAutoAdvance();
     setGameState((prev) => {
       if (prev.status !== 'playing' || !prev.currentSystem) return prev;
-      const used = [...prev.history, prev.currentSystem.name];
-      const nextSystem = getRandomSystem(used, settings.difficulty);
+      const updatedSeen = Array.from(new Set([...prev.seen, prev.currentSystem.name]));
+      const pool =
+        settings.difficulty === 'Any'
+          ? TRANSIT_SYSTEMS
+          : TRANSIT_SYSTEMS.filter((i) => i.region === settings.difficulty);
+      if (updatedSeen.length >= pool.length) {
+        finalizeGame({
+          ...prev,
+          seen: updatedSeen,
+          currentSystem: null,
+          message: 'You reached the end! Congrats!',
+          status: 'completed',
+        });
+        return {
+          ...prev,
+          seen: updatedSeen,
+          status: 'completed',
+          currentSystem: null,
+          message: 'You reached the end! Congrats!',
+        };
+      }
+      const nextSystem = getRandomSystem(updatedSeen, settings.difficulty);
       setSessionHistory((hist) => [
         ...hist,
         {
@@ -341,6 +391,7 @@ export default function Page() {
         currentSystem: nextSystem,
         message: 'Skipped',
         history: prev.history,
+        seen: updatedSeen,
       };
     });
     setFeedbackState('none');
@@ -460,6 +511,7 @@ export default function Page() {
       message: isSolved ? 'Loaded from history' : 'Unfinished',
       hintsRemaining: MAX_HINTS,
       lives: prev.lives > 0 ? prev.lives : 1,
+      seen: Array.from(new Set([...prev.seen, systemToLoad.name])),
     }));
     setIsProcessingGuess(false);
 
@@ -678,6 +730,51 @@ export default function Page() {
                   className="w-full px-8 py-4 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2"
                 >
                   <RefreshCw size={20} /> Try Again
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {gameState.status === 'completed' && (
+            <motion.div
+              key="completed"
+              {...({
+                initial: { opacity: 0, scale: 0.9 },
+                animate: { opacity: 1, scale: 1 },
+              } as any)}
+              className="text-center z-10"
+            >
+              <div className="bg-white dark:bg-zinc-800 p-10 rounded-3xl shadow-2xl border border-gray-100 dark:border-zinc-700 max-w-lg mx-auto">
+                <h2 className="text-3xl font-bold mb-2">All caught up!</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-8">You reached the end of the logo deck.</p>
+
+                <div className="py-8 px-12 bg-gray-50 dark:bg-zinc-700/50 rounded-2xl mb-8 border border-dashed border-gray-200 dark:border-zinc-600">
+                  <p className="text-sm text-gray-400 uppercase tracking-wider font-bold mb-2">Final Score</p>
+                  <p className="text-6xl font-black text-green-600 dark:text-green-400">{gameState.score}</p>
+                </div>
+
+                <div className="mb-8">
+                  <p className="text-sm text-gray-500 mb-2 font-medium">Systems seen:</p>
+                  <div className="flex flex-wrap gap-2 justify-center max-h-32 overflow-y-auto custom-scrollbar">
+                    {gameState.seen.map((op, i) => (
+                      <span
+                        key={i}
+                        className="text-xs px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded"
+                      >
+                        {op}
+                      </span>
+                    ))}
+                    {gameState.seen.length === 0 && (
+                      <span className="text-xs text-gray-400 italic">None</span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={startGame}
+                  className="w-full px-8 py-4 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={20} /> Play Again
                 </button>
               </div>
             </motion.div>

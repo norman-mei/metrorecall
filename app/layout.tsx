@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'Metro Recall',
   description: 'Identify the transit system from iconic logos and nicknames.',
   icons: {
-    icon: '/images/favicon.ico',
+    icon: '/images/favicon/favicon.ico',
   },
 };
 

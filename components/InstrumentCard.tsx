@@ -21,17 +21,6 @@ export function TransitCard({ system }: TransitCardProps) {
         />
       </div>
 
-      <div className="p-5 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200 bg-gradient-to-r from-white/60 to-white/30 dark:from-zinc-900/60 dark:to-zinc-900/30">
-        <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-black text-xs">
-          A-Z
-        </div>
-        <div>
-          <p className="font-semibold">Identify the transit agency</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Type any common alias—city nicknames, abbreviations, or the full authority name all count.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

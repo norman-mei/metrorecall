@@ -14,10 +14,9 @@ export interface TransitSystem {
   aliases?: string[];
 }
 
-export type GameStatus = 'idle' | 'playing' | 'gameover';
+export type GameStatus = 'idle' | 'playing' | 'gameover' | 'completed';
 
 export interface GameSettings {
-  soundEnabled: boolean;
   animationEnabled: boolean;
   difficulty: TransitRegion;
 }
@@ -43,6 +42,7 @@ export interface GameState {
   score: number;
   lives: number;
   history: string[]; // Names of correctly guessed systems
+  seen: string[]; // Names of systems seen in the current run
   message: string | null;
   hintsRemaining: number;
 }
